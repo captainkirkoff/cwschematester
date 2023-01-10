@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Supporto incroci obbligati</title>
+    <style type="text/css">
+        * { font-family: sans-serif; font-size: 1em}
+        table { /*border: 2px solid black;*/ }
+        table, th, td {
+            padding: 0;
+            border-collapse: collapse;
+            font-family: monospace;
+        }
+        th#th0 {
+            color: red;
+            font-size: 1.5em;
+            font-weight: bolder;
+        }
+        th.hth {
+            height: 2em;
+            border-bottom: 1px solid black;
+        }
+        th.vth {
+            width: 2em;
+            border-right: 1px solid black;
+        }
+        td.right {
+            border-right: 1px solid black;
+        }
+        td.bottom {
+            border-bottom: 1px solid black;
+        }
+
+        td input {
+            text-transform: uppercase;
+            width: 1em;
+            text-align: center; 
+            border: 1px solid black;
+        }
+        td input.letter {
+            background-color: white;
+        }
+        td input.letter.alt {
+            background-color: lightgray;
+        }
+        td input.blank {
+            background-color: black;
+        }
+        button.btn {
+            margin: 0;
+            text-transform: uppercase;
+            width: 11em;
+        }
+        button.btn.big {
+            width: 22em;
+        }
+        span#rc {
+            display: inline-block;
+            width: 11em;
+            margin: 0;
+            text-align: right;
+        }
+        #rc input {
+            width: 2.5em;
+        }
+
+    </style>
+    <script>
+        var numeroR = 0;
+        var numeroC =0;
+        var R = -1;
+        var C = -1;
+        var dir = 'O'; //O: orizzontale //V: verticale
+        function saveSchema() {
+            document.getElementById('th0').innerHTML = "&rarr;"; //resetta direzione
+            var tabella = document.getElementById("schema");
+            var datiTabella = tabella.innerHTML;
+            localStorage.setItem("datiTabella", datiTabella);
+
+            let inputs = document.querySelectorAll('table input[type="text"]');
+
+            // scorri tutti gli input e salva i loro valori nel local storage
+            for (let i = 0; i < inputs.length; i++) {
+              let input = inputs[i];
+              let chiave = 'input_' + i;  // genera una chiave univoca per ogni input
+              let valore = input.value;
+              localStorage.setItem(chiave, valore);
+            }
+        }
+
+        function loadSchema() {
+
+            var datiTabella = localStorage.getItem("datiTabella");
+            var table = document.getElementById("schema");
+            if (!table) {
+                table = document.createElement('table');
+                table.id = "schema";
+                //document.body.appendChild(table);
+                container.appendChild(table);
+            }
+            table.innerHTML = datiTabella;
+
+            let inputs = document.querySelectorAll('table input[type="text"]');
+
+            // scorri tutti gli input e imposta i loro valori utilizzando i dati dal local storage
+            for (let i = 0; i < inputs.length; i++) {
+              let input = inputs[i];
+              let chiave = 'input_' + i;  // utilizza la stessa chiave utilizzata per salvare i dati
+              let valore = localStorage.getItem(chiave);
+              input.value = valore;
+              //input.addEventListener('input', letteraScritta);
+              input.addEventListener('keyup', letteraScritta);
+
+            }
+
+            numeroR = table.rows.length - 1;
+            numeroC = table.rows[0].cells.length - 1;   
+            
+        }
+
+        function loadSchemaFromJSON(jsonObject) {
+
+            var datiTabella = jsonObject.datiTabella;
+            var table = document.getElementById("schema");
+            if (!table) {
+                table = document.createElement('table');
+                table.id = "schema";
+                //document.body.appendChild(table);
+                container.appendChild(table);
+            }
+            table.innerHTML = datiTabella;
+
+            let inputs = document.querySelectorAll('table input[type="text"]');
+
+            // scorri tutti gli input e imposta i loro valori utilizzando i dati dal local storage
+            for (let i = 0; i < inputs.length; i++) {
+              let input = inputs[i];
+              let chiave = 'input_' + i;  // utilizza la stessa chiave utilizzata per salvare i dati
+              let valore = jsonObject[chiave];
+              input.value = valore;
+              //input.addEventListener('input', letteraScritta);
+              input.addEventListener('keyup', letteraScritta);
+            }
+
+            numeroR = table.rows.length - 1;
+            numeroC = table.rows[0].cells.length - 1;
+            
+        }
+
+        function generate(rows, columns, cc=false) {
+            var oldTable = document.getElementById("schema");
+            if (oldTable) {
+                oldTable.remove();
+            }
+            numeroR = rows;
+            numeroC = columns;
+            var table = document.createElement('table');
+            table.id = "schema";
+//thead
+            var trh = document.createElement('tr');
+            var th0 = document.createElement('th');
+            //th0.className = "hth";
+            th0.id = 'th0';
+            th0.innerHTML = "&rarr;";
+            
+            trh.appendChild(th0);
+            for (var j = 0; j < columns; j++) {
+                var thj = document.createElement('th');
+                thj.className = "hth";
+                thj.textContent = parseInt(j)+1;
+                trh.appendChild(thj);
+            }
+            table.appendChild(trh);
+
+            for (var i = 0; i < rows; i++){
+                var tr = document.createElement('tr');
+                var thi = document.createElement('th');
+                thi.textContent = parseInt(i)+1;
+                thi.className = "vth";
+                tr.appendChild(thi);
+                for (var j = 0; j < columns; j++) {
+                    var tdij = document.createElement('td');
+                    //var textij = document.createTextNode('Text'+i+'-'+j);
+                    let tdClassname = "";
+                    if (i == (rows -1)) tdClassname += "bottom";
+                    if (j == (columns -1)) tdClassname += " right"; 
+                    tdij.className = tdClassname;
+
+                    var input = document.createElement("input");
+                    input.type = "text";
+                    input.size = 1;
+                    input.maxLength = 1;
+
+                    let className = 'letter';
+                    if (cc == true) {
+                        trh.style.display = 'none';
+                        let realR = i+1;
+                        let realC = j+1;
+                        let dim = rows;
+                        if (realR % 2 == 0)
+                            if ((realC > i && realC < (dim - i + 1)) || (realC <= realR && realC > (dim - i - 1)))
+                                className += " alt";
+
+                        if (realC % 2 == 0) // && realC <= (dim - 1)/2)
+                            if ((realR > j && realR < (dim - j + 1)) || (realR <= realC && realR > (dim - j -1)))
+                                className += " alt";
+
+                        if (i == (dim - 1)/2 && j == (dim - 1)/2)
+                            className = 'blank';
+                    }
+                    input.className = className;
+
+                    input.id = "letter_" + i + "-" + j;
+                    //input.addEventListener('input', letteraScritta);
+                    input.addEventListener('keyup', letteraScritta);
+
+                    tdij.appendChild(input); 
+                    tr.appendChild(tdij);
+                }
+                table.appendChild(tr);
+            }
+            //document.body.appendChild(table);
+            container.appendChild(table);
+            document.getElementById('annerisci').disabled = false;
+            document.getElementById('sbianca').disabled = false;
+        }
+
+        function parseID(id) {
+            var r_c = id.split('_')[1];
+            return r_c.split('-');
+        }
+
+    </script>
+</head>
+<body>
+    <form id="upload" method="POST" action="">
+        <input style="display: inline-block;width:22em; margin: 0;" type="file" id="file" accept=".json">
+        <button class="btn big" >importa schema</button>
+    </form>
+    <hr>
+    <div id="container-main"> 
+        <span id="rc">R:<input type="number" id="r" min="2" max="99"> C:<input type="number" id="c" min="2" max="99"></span>
+        <button class="btn" id="genera">nuovo schema</button>
+        <button class="btn" id="salva">salva schema</button>
+        <button class="btn" id="carica">carica schema</button>
+        <button class="btn" id="esporta">esporta schema</button>
+        <button class="btn" id="cc">corn. concentr.</button>
+        <hr>
+        <button class="btn" id="diro" >scrivi in orizz.</button>
+        <button class="btn" id="dirv" >scrivi in vert.</button>
+        <button class="btn" id="annerisci">annerisci</button>
+        <button class="btn" id="sbianca">sbianca</button>
+        <button class="btn" id="ingrandisci">ingrandisci</button>
+        <button class="btn" id="rimpicciolisci">rimpicciolisci</button>
+        <hr>
+    </div>
+    <hr>
+    <div>Cella selezionata: <span id="values" style="">-</span> Direzione: <span id="dir">O</span></div>
+
+<script type="text/javascript">
+        const log = document.getElementById('values');
+        const dirLog = document.getElementById('dir');
+        let form = document.querySelector('#upload');
+        let file = document.querySelector('#file');
+        let container = document.getElementById('container-main');
+        var letterSize = 1.0;
+
+        form.addEventListener('submit', handleSubmit);
+
+        container.addEventListener('click', function (event) {
+
+            if (!event.target.matches('#file')) {
+                event.preventDefault();
+            }
+
+            if (event.target.matches('#rimpicciolisci')) {
+                if (letterSize == 1.0) return;
+                letterSize = letterSize - 0.5;
+                console.log(letterSize);
+                var letters = document.querySelectorAll("td input");
+                for ( var i = 0; i < letters.length; i ++ ) {
+                   letters[i].style.fontSize = letterSize + "em";
+                }
+            }
+
+            if (event.target.matches('#ingrandisci')) {
+                letterSize = letterSize + 0.5;
+                console.log(letterSize);
+                var letters = document.querySelectorAll("td input");
+                for ( var i = 0; i < letters.length; i ++ ) {
+                   letters[i].style.fontSize = letterSize + "em";
+                }
+            }
+
+            if (event.target.matches('#genera')) {
+                var r = document.getElementById('r').value; 
+                var c = document.getElementById('c').value;     
+
+                generate(r,c);
+            }
+            if (event.target.matches('#cc')) {  
+                generate(13,13,true);
+            }
+            if (event.target.matches('.letter') || event.target.matches('.blank')) {
+                var id = event.target.id;
+                var rc = parseID(id);
+                R = rc[0];
+                C = rc[1];
+                log.textContent = "[" + (parseInt(R) + 1) + ", " + (parseInt(C) + 1) + "]"; // + event.target.value;
+            }
+            if (event.target.matches('#annerisci')) {
+                if (R == -1) return;
+                var id = "letter_" + R + "-" + C;
+                var input = document.getElementById(id);
+                input.value = '';
+                input.readonly = true;
+                input.className = "blank";
+            }
+            if (event.target.matches('#sbianca')) {
+                if (R == -1) return;
+                var id = "letter_" + R + "-" + C;
+                var input = document.getElementById(id);
+                input.value = '';
+                input.readonly = false;
+                input.className = "letter";
+            }
+            if (event.target.matches('#diro')) {
+                dir = 'O';
+                dirLog.textContent = dir;
+                document.getElementById('th0').innerHTML = "&rarr;";
+            }
+            if (event.target.matches('#dirv')) {
+                dir = 'V';
+                dirLog.textContent = dir;
+                document.getElementById('th0').innerHTML = "&darr;";
+            }
+            if (event.target.matches('#salva')) {
+                saveSchema();
+            }
+            if (event.target.matches('#carica')) {
+                loadSchema();
+            }
+            if (event.target.matches('#esporta')) {
+                saveSchema();
+                download(JSON.stringify(localStorage, null, '\t'), "schema.json", "text/plain'");
+            }
+
+
+        }, false);
+
+        function letteraScritta(e) {
+            var key = e.keyCode || e.charCode;
+            var detectBackspace = false;
+            var movingLeft = false;
+            var movingUp = false;
+            var movingDown = false;
+            var movingRight = false;
+
+            //left = 37 - up = 38 - right = 39 - down = 40 - backspace = 8
+            switch(key) {
+                case 8:
+                    detectBackspace = true;
+                    break;
+                case 37: 
+                    movingLeft = true;
+                    break;
+                case 38: 
+                    movingUp = true;
+                    break;
+                case 39: 
+                    movingRight = true;
+                    break;
+                case 40: 
+                    movingDown = true;
+                    break;
+                default:
+                    break;
+            }
+
+            var idScritto = parseID(e.target.id);
+            var rCorrente = idScritto[0];
+            var cCorrente = idScritto[1];
+
+            let r = parseInt(rCorrente);
+            let c = parseInt(cCorrente);
+
+            var dontmove = 
+                (!detectBackspace && ((r == (numeroR - 1) && dir == 'V') || (c == (numeroC - 1) && dir == 'O')))
+                || (detectBackspace && ((r == 0 && dir == 'V') || (c == 0 && dir == 'O')))
+
+            if (dontmove) return;
+
+            rNext = (dir == 'V' ? (detectBackspace ? r - 1 : r + 1) : r);
+            cNext = (dir == 'O' ? (detectBackspace ? c - 1 : c + 1) : c);
+
+            //override per tasti freccia, a prescindere dalla dir.
+            if (movingUp) {
+                rNext = r - 1;
+                cNext = c;
+            }
+            if (movingRight) {
+                rNext = r;
+                cNext = c + 1;
+            }
+            if (movingDown) {
+                rNext = r + 1;
+                cNext = c;
+            }
+            if (movingLeft) {
+                rNext = r;
+                cNext = c - 1;
+            }
+
+            var nextID = "letter_" + rNext + "-" + cNext;
+            document.getElementById(nextID).focus();
+            document.getElementById(nextID).click();
+        }
+
+        function download(content, fileName, contentType) {
+            var a = document.createElement("a");
+            var file = new Blob([content], {type: contentType});
+            a.href = URL.createObjectURL(file);
+            a.download = fileName;
+            a.click();
+        }
+
+        function handleSubmit (event) {
+            event.preventDefault();
+            console.log("Loading schema from file...");
+            if (!file.value.length) return;
+
+            let reader = new FileReader();
+            reader.onload = schemaFromFile;
+            reader.readAsText(file.files[0]);
+        }
+
+        function schemaFromFile (event) {
+            let str = event.target.result;
+            let json = JSON.parse(str);
+            loadSchemaFromJSON(json);
+        }
+
+</script>
+
+    
+</body>
+</html>
