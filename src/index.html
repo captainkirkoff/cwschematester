@@ -12,7 +12,15 @@
             padding: 0;
             border-collapse: collapse;
             font-family: monospace;
+            position: relative;
+            background-color: white;
         }
+
+        div.number { 
+            position: absolute;
+            top: 0; left: 0;
+        }
+
         th#th0 {
             color: red;
             font-size: 1.5em;
@@ -38,15 +46,17 @@
             width: 1em;
             text-align: center; 
             border: 1px solid black;
+            padding: 2px;
         }
         td input.letter {
-            background-color: white;
+            background-color: transparent;
         }
         td input.letter.alt {
             background-color: lightgray;
         }
         td input.blank {
             background-color: black;
+            background-clip: content-box;
         }
         button.btn {
             margin: 0;
@@ -58,14 +68,14 @@
         button.btn.big {
             width: 22em;
         }
-        span#rc {
+        span.rc {
             display: inline-block;
             width: 11em;
             margin: 0;
             font-size: 0.8em;
             text-align: right;
         }
-        #rc input {
+        .rc input {
             width: 2.5em;
         }
 
@@ -101,7 +111,7 @@
                 table = document.createElement('table');
                 table.id = "schema";
                 //document.body.appendChild(table);
-                container.appendChild(table);
+                schema_container.appendChild(table);
             }
             table.innerHTML = datiTabella;
 
@@ -131,7 +141,7 @@
                 table = document.createElement('table');
                 table.id = "schema";
                 //document.body.appendChild(table);
-                container.appendChild(table);
+                schema_container.appendChild(table);
             }
             table.innerHTML = datiTabella;
 
@@ -219,13 +229,18 @@
                     //input.addEventListener('input', letteraScritta);
                     input.addEventListener('keyup', letteraScritta);
 
-                    tdij.appendChild(input); 
+                    var number = document.createElement("div");
+                    number.className = "number";
+                    number.id = "number_" + i + "-" + j;
+
+                    tdij.appendChild(input);
+                    tdij.appendChild(number); 
                     tr.appendChild(tdij);
                 }
                 table.appendChild(tr);
             }
             //document.body.appendChild(table);
-            container.appendChild(table);
+            schema_container.appendChild(table);
             document.getElementById('annerisci').disabled = false;
             document.getElementById('sbianca').disabled = false;
         }
@@ -244,12 +259,14 @@
     </form>
     <hr>
     <div id="container-main"> 
-        <span id="rc">R:<input type="number" id="r" min="2" max="99"> C:<input type="number" id="c" min="2" max="99"></span>
+        <span class="rc">R:<input type="number" id="r" min="2" max="99"> C:<input type="number" id="c" min="2" max="99"></span>
         <button class="btn" id="genera">nuovo schema</button>
         <button class="btn" id="salva">salva schema</button>
         <button class="btn" id="carica">carica schema</button>
         <button class="btn" id="esporta">esporta schema</button>
         <button class="btn" id="cc">corn. concentr.</button>
+        <hr>
+        <div id="schema-container"></div>
         <hr>
         <button class="btn" id="diro" >scrivi in orizz.</button>
         <button class="btn" id="dirv" >scrivi in vert.</button>
@@ -257,7 +274,9 @@
         <button class="btn" id="sbianca">sbianca</button>
         <button class="btn" id="ingrandisci">ingrandisci</button>
         <button class="btn" id="rimpicciolisci">rimpicciolisci</button>
-        <hr>
+        <span class="rc">n.:<input type="number" id="n" min="1" max="99"></span>
+        <button class="btn" id="numera">numera</button>
+        <button class="btn" id="azzera">azzera</button>
     </div>
     <hr>
     <div>Cella selezionata: <span id="values" style="">-</span> Direzione: <span id="dir">O</span></div>
@@ -268,6 +287,7 @@
         let form = document.querySelector('#upload');
         let file = document.querySelector('#file');
         let container = document.getElementById('container-main');
+        let schema_container = document.getElementById('schema-container');
         var letterSize = 1.0;
 
         form.addEventListener('submit', handleSubmit);
@@ -320,6 +340,8 @@
                 input.value = '';
                 input.readonly = true;
                 input.className = "blank";
+                var numberDiv = document.getElementById("number_" + R + "-" + C);
+                numberDiv.textContent = '';
             }
             if (event.target.matches('#sbianca')) {
                 if (R == -1) return;
@@ -329,6 +351,18 @@
                 input.readonly = false;
                 input.className = "letter";
             }
+            if (event.target.matches('#numera')) {
+                if (R == -1) return;
+                var n = document.getElementById('n').value; 
+                var numberDiv = document.getElementById("number_" + R + "-" + C);
+                numberDiv.textContent = n;
+            }
+            if (event.target.matches('#azzera')) {
+                if (R == -1) return;
+                var numberDiv = document.getElementById("number_" + R + "-" + C);
+                numberDiv.textContent = '';
+            }
+
             if (event.target.matches('#diro')) {
                 dir = 'O';
                 dirLog.textContent = dir;
